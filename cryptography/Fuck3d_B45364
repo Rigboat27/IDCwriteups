@@ -1,0 +1,49 @@
+## Fuck3d_B45364
+
+I saw the ciphertext `JFCEGebEGMZXAXbEGFbDGXZRNZPWENBVGMbDIfI`.  
+The hints mentioned **base64**, **salt**, and a weird phrase. At first I thought it really was base64, so I wasted some time trying to decode it. Obviously that failed because the string isn’t valid base64.
+
+Then I noticed the characters were only `A–Z` and `a–f`. That reminded me of **32 possible symbols**, which would fit **5 bits per character**, like base32. So I tried mapping:
+
+- `A–Z` → 0 to 25  
+- `a–f` → 26 to 31
+
+This gives exactly 32 values, so it felt right.
+
+After that, I converted each character to its 5-bit binary, concatenated all bits, and then split the long bitstring into 8-bit bytes. The first time I messed up because I tried shifting the starting point, but finally I realized **no offset** was required.
+
+When I decoded those bytes as ASCII, I got a clean readable flag:
+
+```
+IDC{d33p_d1v3_1n_b45364}
+```
+
+So the hint “five spoons of salt plus another spoon” pointed to **five bits plus extra symbols**, not to hashing.
+The weird phrase was just noise. I wasted a lot of time to get to this stage lol. with LOTS AND LOTS AND LOTS of trial and error
+
+---
+
+## Code
+
+```python
+mapping = {}
+for i, ch in enumerate("ABCDEFGHIJKLMNOPQRSTUVWXYZ"):
+    mapping[ch] = i
+for i, ch in enumerate("abcdef", start=26):
+    mapping[ch] = i
+
+ct = "JFCEGebEGMZXAXbEGFbDGXZRNZPWENBVGMbDIfI"
+
+bits = ""
+for c in ct:
+    bits += format(mapping[c], "05b")
+
+out = []
+for i in range(0, len(bits), 8):
+    b = bits[i:i+8]
+    if len(b) == 8:
+        out.append(int(b, 2))
+
+print(bytes(out).decode("ascii"))
+```
+
